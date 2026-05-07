@@ -6,6 +6,8 @@ from dataclasses import dataclass
 import io
 import stat
 
+import httpx
+
 from integration_x import __version__
 from integration_x.config import Settings
 from integration_x.app import (
@@ -99,6 +101,62 @@ def test_sync_payloads_updates_existing_company_by_name() -> None:
     assert summary == SyncSummary(rows_created=1, rows_updated=1)
     assert twenty.updated == [("company-1", {"name": "Acme AB"})]
     assert twenty.created == [{"name": "New AB"}]
+
+
+def test_twenty_client_finds_company_by_name_with_filter_string() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(
+            200,
+            json={"data": {"companies": [{"id": "company-1", "name": "Acme AB"}]}},
+        )
+
+    client = httpx.Client(
+        base_url="https://twenty.example",
+        transport=httpx.MockTransport(handler),
+    )
+    twenty = TwentyClient("https://twenty.example", "token", client=client)
+
+    assert twenty.find_company_by_name("Acme AB") == {
+        "id": "company-1",
+        "name": "Acme AB",
+    }
+    assert requests[0].url.params["filter"] == "name[eq]:Acme AB"
+    assert requests[0].url.params["limit"] == "1"
+
+
+def test_twenty_client_retries_create_without_domain_on_duplicate_error() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        if len(requests) == 1:
+            return httpx.Response(
+                400,
+                json={"messages": ["A duplicate entry was detected"]},
+            )
+        return httpx.Response(201, json={"data": {"id": "company-1"}})
+
+    client = httpx.Client(
+        base_url="https://twenty.example",
+        transport=httpx.MockTransport(handler),
+    )
+    twenty = TwentyClient("https://twenty.example", "token", client=client)
+
+    assert twenty.create_company(
+        {
+            "name": "Acme AB",
+            "domainName": {
+                "primaryLinkUrl": "https://acme.example",
+                "primaryLinkLabel": "",
+                "secondaryLinks": [],
+            },
+        }
+    ) == {"data": {"id": "company-1"}}
+    assert len(requests) == 2
+    assert "domainName" not in requests[1].read().decode()
 
 
 def test_run_sync_reads_sftp_xml_upserts_and_archives_processed_file() -> None:

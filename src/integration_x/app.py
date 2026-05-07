@@ -88,8 +88,7 @@ class TwentyClient:
         response = self._client.get(
             "/rest/companies",
             params={
-                "filter[name][eq]": name,
-                "filter[deletedAt][is]": "NULL",
+                "filter": f"name[eq]:{name}",
                 "limit": "1",
             },
         )
@@ -99,6 +98,8 @@ class TwentyClient:
 
     def create_company(self, payload: TwentyCompanyPayload) -> dict[str, Any]:
         response = self._client.post("/rest/companies", json=payload)
+        if _is_duplicate_response(response) and "domainName" in payload:
+            response = self._client.post("/rest/companies", json=_without_domain_name(payload))
         response.raise_for_status()
         return response.json()
 
@@ -108,6 +109,11 @@ class TwentyClient:
         payload: TwentyCompanyPayload,
     ) -> dict[str, Any]:
         response = self._client.patch(f"/rest/companies/{company_id}", json=payload)
+        if _is_duplicate_response(response) and "domainName" in payload:
+            response = self._client.patch(
+                f"/rest/companies/{company_id}",
+                json=_without_domain_name(payload),
+            )
         response.raise_for_status()
         return response.json()
 
@@ -355,6 +361,20 @@ def _extract_twenty_records(data: dict[str, Any]) -> list[dict[str, Any]]:
 def _twenty_record_id(record: dict[str, Any]) -> str | None:
     value = record.get("id")
     return str(value) if value else None
+
+
+def _is_duplicate_response(response: httpx.Response) -> bool:
+    if response.status_code != 400:
+        return False
+    try:
+        messages = response.json().get("messages", [])
+    except ValueError:
+        return False
+    return any("duplicate entry" in str(message).lower() for message in messages)
+
+
+def _without_domain_name(payload: TwentyCompanyPayload) -> TwentyCompanyPayload:
+    return {key: value for key, value in payload.items() if key != "domainName"}
 
 
 def _list_inbox_xml_files(sftp: paramiko.SFTPClient, inbox: str) -> list[str]:

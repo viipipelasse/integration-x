@@ -8,6 +8,12 @@ from integration_x.app import (
     map_xml_companies_to_twenty_companies,
     parse_companies_xml_file,
 )
+from integration_x.config import _normalize_base_url
+
+
+def test_normalize_base_url_adds_https_to_bare_host() -> None:
+    assert _normalize_base_url("crm.example.com/") == "https://crm.example.com"
+    assert _normalize_base_url("https://crm.example.com/") == "https://crm.example.com"
 
 
 def test_customer_fixture_matches_soap_company_shape() -> None:

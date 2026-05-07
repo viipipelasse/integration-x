@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 
@@ -61,7 +62,16 @@ def load_settings() -> Settings:
         sftp_username=os.environ["SFTP_USERNAME"],
         sftp_password=os.environ["SFTP_PASSWORD"],
         sftp_inbox=os.environ["SFTP_INBOX"].rstrip("/") or ".",
-        twenty_base_url=os.environ["TWENTY_BASE_URL"].rstrip("/"),
+        twenty_base_url=_normalize_base_url(os.environ["TWENTY_BASE_URL"]),
         twenty_api_token=os.environ["TWENTY_API_TOKEN"],
         timeout_seconds=timeout_seconds,
     )
+
+
+def _normalize_base_url(value: str) -> str:
+    base_url = value.strip().rstrip("/")
+    if not base_url:
+        raise ConfigError("TWENTY_BASE_URL must not be empty")
+    if not urlparse(base_url).scheme:
+        base_url = f"https://{base_url}"
+    return base_url
