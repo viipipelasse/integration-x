@@ -1,0 +1,27 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "integration-x"
+version = "0.1.0"
+description = "One-shot SFTP XML to Twenty CRM company import."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx",
+  "paramiko",
+  "polars",
+  "python-dotenv",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+]
+
+[project.scripts]
+integration-x = "integration_x.app:run"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

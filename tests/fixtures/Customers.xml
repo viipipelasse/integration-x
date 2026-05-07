@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<soap11env:Envelope xmlns:soap11env="http://schemas.xmlsoap.org/soap/envelope/"
+                    xmlns:tns="http://soap-crm.local/services"
+                    xmlns:s0="http://soap-crm.local/types">
+  <soap11env:Body>
+    <tns:GetCompaniesResponse>
+      <s0:Company>
+        <s0:Name>Acme AB</s0:Name>
+        <s0:Website>https://acme.example</s0:Website>
+        <s0:Address>Main Street 1</s0:Address>
+        <s0:City>Stockholm</s0:City>
+        <s0:Country>Sweden</s0:Country>
+      </s0:Company>
+    </tns:GetCompaniesResponse>
+  </soap11env:Body>
+</soap11env:Envelope>
