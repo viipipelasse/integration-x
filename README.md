@@ -1,12 +1,13 @@
 # Integration-X
 
-Integration-X is a small Python CLI scaffold for importing customer XML files
-from SFTP into Twenty CRM Companies.
+Integration-X is a small Python CLI for importing customer XML files from SFTP
+into Twenty CRM Companies.
 
 The implementation contract is documented in [SPEC.md](SPEC.md). This
-repository currently contains the project layout, packaging metadata, source
-package placeholders, test placeholders, and a sample SOAP fixture for the
-future implementation pass.
+It loads SFTP and Twenty credentials from environment variables, processes
+`*.xml` files in the configured SFTP inbox, creates or updates Twenty Companies
+matched by exact trimmed name, archives handled files under `processed/`, and
+writes a run log under `log/`.
 
 ## Layout
 

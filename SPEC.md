@@ -3,7 +3,7 @@
 Status: Draft v1
 
 Purpose: one small Python CLI that reads customer XML files from SFTP and
-creates missing Companies in Twenty CRM.
+syncs Companies into Twenty CRM.
 
 ## 1. Scope
 
@@ -16,14 +16,15 @@ It must:
 - Parse SOAP XML customer records.
 - Normalize records with Polars.
 - Create a Twenty Company when no Company with the same trimmed `name` exists.
-- Skip existing Companies and bad rows.
+- Update the matching Twenty Company when a Company with the same trimmed
+  `name` already exists.
+- Skip bad rows.
 - Move successfully handled files to `processed/`.
 - Write a simple run log to stdout and SFTP `log/`.
 
 It must not:
 
 - Sync from Twenty back to the ERP.
-- Update existing Companies.
 - Create other Twenty objects.
 - Run as a daemon, web app, dashboard, or API.
 - Promise exactly-once delivery.
@@ -89,10 +90,9 @@ Request body examples:
 For each normalized row:
 
 1. Query Twenty for an active Company with the same exact `name`.
-2. If found, log it as skipped.
+2. If found, update that Company with the normalized payload and log it as
+   updated.
 3. If not found, create it.
-
-Existing Companies are never updated in v1.
 
 ## 4. SFTP Layout
 
